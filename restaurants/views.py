@@ -2,6 +2,18 @@ from django.shortcuts import render, redirect
 from .models import Restaurant
 from .forms import RestaurantForm
 
+def signup(request):
+    
+    return render(request, 'signup.html', context)
+
+def signin(request):
+    
+    return 
+
+def signout(request):
+    
+    return 
+
 def restaurant_list(request):
     context = {
         "restaurants":Restaurant.objects.all()
