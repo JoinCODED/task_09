@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
+from django.contrib.auth.models import User
 from restaurants.models import Restaurant
 from restaurants.forms import RestaurantForm, SignupForm, SigninForm
 
@@ -21,7 +22,7 @@ class RestaurantViewTestCase(TestCase):
             "opening_time": "00:01:00",
             "closing_time":"23:59:00",
             "logo":"http://icons.veryicon.com/png/Movie%20%26%20TV/Free%20Star%20Wars/Darth%20Vader.png"
-        }
+            }
         self.restaurant_1 = Restaurant.objects.create(
             name="Restaurant 1",
             description="This is Restaurant 1",
@@ -43,6 +44,28 @@ class RestaurantViewTestCase(TestCase):
             closing_time="23:59:00",
             logo="http://icons.veryicon.com/png/Movie%20%26%20TV/Free%20Star%20Wars/Darth%20Vader.png"
             )
+        self.user = User.objects.create(
+            username="bob",
+            password='adminadmin',
+            )
+        self.user.set_password(self.user.password)
+        self.user.save()
+        self.user_1 = {
+            "username": "bob",
+            "password": "adminadmin"
+            }
+        self.user_2 = {
+            "username": "billy",
+            "password": "adminadmin",
+            }
+        self.user_3 = {
+            "username": "bob",
+            "password": "",
+            }
+        self.user_4 = {
+            "username": "",
+            "password": "somepassword",
+            }
 
     def test_list_view(self):
         list_url = reverse("restaurant-list")
@@ -83,6 +106,47 @@ class RestaurantViewTestCase(TestCase):
     def test_delete_view(self):
         delete_url = reverse("restaurant-delete", kwargs={"restaurant_id":self.restaurant_1.id})
         response = self.client.get(delete_url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_signup_view(self):
+        signup_url = reverse("signup")
+
+        response = self.client.get(signup_url)
+        self.assertEqual(response.status_code, 200)
+
+        response2 = self.client.post(signup_url, self.user_1)
+        self.assertEqual(response2.status_code, 200)
+
+        response3 = self.client.post(signup_url, self.user_2)
+        self.assertEqual(response3.status_code, 302)
+
+        response4 = self.client.post(signup_url, self.user_3)
+        self.assertEqual(response4.status_code, 200)
+
+        response5 = self.client.post(signup_url, self.user_4)
+        self.assertEqual(response5.status_code, 200)
+
+    def test_signin_view(self):
+        signin_url = reverse("signin")
+        
+        response = self.client.get(signin_url)
+        self.assertEqual(response.status_code, 200)
+
+        response2 = self.client.post(signin_url, self.user_1)
+        self.assertEqual(response2.status_code, 302)
+
+        response2 = self.client.post(signin_url, self.user_2)
+        self.assertEqual(response2.status_code, 200)
+
+        response2 = self.client.post(signin_url, self.user_3)
+        self.assertEqual(response2.status_code, 200)
+
+        response2 = self.client.post(signin_url, self.user_4)
+        self.assertEqual(response2.status_code, 200)
+
+    def test_signout_view(self):
+        signout_url = reverse("signout")
+        response = self.client.get(signout_url)
         self.assertEqual(response.status_code, 302)
 
 
@@ -141,8 +205,8 @@ class AuthFormTestCase(TestCase):
     def test_valid_signin_form(self):
         form = SigninForm(data=self.user_1)
         self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data.get('username'), self.user_1.username)
-        self.assertEqual(form.cleaned_data.get('password'), self.user_1.password)
+        self.assertEqual(form.cleaned_data.get('username'), self.user_1['username'])
+        self.assertEqual(form.cleaned_data.get('password'), self.user_1['password'])
 
     def test_invalid_signin_form(self):
         form = SigninForm(data=self.user_3)
@@ -153,8 +217,8 @@ class AuthFormTestCase(TestCase):
     def test_valid_signup_form(self):
         form = SignupForm(data=self.user_2)
         self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data.get('username'), self.user_2.username)
-        self.assertEqual(form.cleaned_data.get('password'), self.user_2.password)
+        self.assertEqual(form.cleaned_data['username'], self.user_2['username'])
+        self.assertEqual(form.cleaned_data.get('password'), self.user_2['password'])
 
     def test_invalid_signup_form(self):
         form = SignupForm(data=self.user_1)
