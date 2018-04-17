@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 from restaurants.models import Restaurant
-from restaurants.forms import RestaurantForm
+from restaurants.forms import RestaurantForm, SignupForm, SigninForm
 
 class RestaurantModelTestCase(TestCase):
     def test_create(self):
@@ -113,4 +113,53 @@ class RestaurantFormTestCase(TestCase):
             'description': description,
         }
         form = RestaurantForm(data=data)
+        self.assertFalse(form.is_valid())
+
+class AuthFormTestCase(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(
+            username="bob",
+            password='adminadmin',
+        )
+        self.user_1 = {
+            "username": "bob",
+            "password": "adminadmin",
+        }
+        self.user_2 = {
+            "username": "billy",
+            "password": "adminadmin",
+        }
+        self.user_3 = {
+            "username": "bob",
+            "password": "",
+        }
+        self.user_4 = {
+            "username": "",
+            "password": "somepassword",
+        }
+
+    def test_valid_signin_form(self):
+        form = SigninForm(data=self.user_1)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data.get('username'), self.user_1.username)
+        self.assertEqual(form.cleaned_data.get('password'), self.user_1.password)
+
+    def test_invalid_signin_form(self):
+        form = SigninForm(data=self.user_3)
+        self.assertFalse(form.is_valid())
+        form = SigninForm(data=self.user_4)
+        self.assertFalse(form.is_valid())
+
+    def test_valid_signup_form(self):
+        form = SignupForm(data=self.user_2)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data.get('username'), self.user_2.username)
+        self.assertEqual(form.cleaned_data.get('password'), self.user_2.password)
+
+    def test_invalid_signup_form(self):
+        form = SignupForm(data=self.user_1)
+        self.assertFalse(form.is_valid())
+        form = SignupForm(data=self.user_3)
+        self.assertFalse(form.is_valid())
+        form = SignupForm(data=self.user_4)
         self.assertFalse(form.is_valid())
